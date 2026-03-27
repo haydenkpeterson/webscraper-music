@@ -1,0 +1,10 @@
+export const SERVER_PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
+export const CACHE_TTL_MS = Number.parseInt(process.env.CACHE_TTL_MS ?? `${5 * 60 * 1000}`, 10);
+export const SEARCH_JOB_TTL_MS = Number.parseInt(process.env.SEARCH_JOB_TTL_MS ?? `${10 * 60 * 1000}`, 10);
+export const RESULT_FRESH_TTL_MS = Number.parseInt(process.env.RESULT_FRESH_TTL_MS ?? `${24 * 60 * 60 * 1000}`, 10);
+export const HISTORY_RETENTION_LIMIT = Number.parseInt(process.env.HISTORY_RETENTION_LIMIT ?? '10', 10);
+export const SCRAPE_JOB_CONCURRENCY = Number.parseInt(process.env.SCRAPE_JOB_CONCURRENCY ?? '2', 10);
+export const ADAPTER_SEARCH_PAGE_CONCURRENCY = Number.parseInt(process.env.ADAPTER_SEARCH_PAGE_CONCURRENCY ?? '2', 10);
+export const ADAPTER_DETAIL_PAGE_CONCURRENCY = Number.parseInt(process.env.ADAPTER_DETAIL_PAGE_CONCURRENCY ?? '4', 10);
+export const REQUEST_TIMEOUT_MS = Number.parseInt(process.env.REQUEST_TIMEOUT_MS ?? '30000', 10);
+export const MAX_BLUE_DETAIL_CHECKS = Number.parseInt(process.env.MAX_BLUE_DETAIL_CHECKS ?? '4', 10);
