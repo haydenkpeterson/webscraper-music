@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import type { BrowserContext } from 'playwright';
 import { describe, expect, it } from 'vitest';
 import type { MarketplaceAdapter } from '../src/server/adapters/common';
@@ -43,6 +46,10 @@ function createListing(source: Listing['source'], title: string, itemPrice: numb
 
 describe('search service progress', () => {
   it('emits source progress in completion order with accurate counts', async () => {
+    const tempDir = await mkdtemp(path.join(tmpdir(), 'webscraper-music-search-service-'));
+    const previousHistoryPath = process.env.SEARCH_HISTORY_PATH;
+    process.env.SEARCH_HISTORY_PATH = path.join(tempDir, 'search-history.json');
+
     const adapters = {
       ebay: {
         source: 'ebay',
@@ -78,29 +85,39 @@ describe('search service progress', () => {
       }
     });
 
-    const response = await searchService.search(createPreset(), {
-      forceRefresh: true,
-      onProgress(event) {
-        events.push(event);
-      }
-    });
+    try {
+      const response = await searchService.search(createPreset(), {
+        forceRefresh: true,
+        onProgress(event) {
+          events.push(event);
+        }
+      });
 
-    expect(events[0]?.type).toBe('started');
-    expect(events.filter((event) => event.type === 'source_started').map((event) => event.source)).toEqual([
-      'ebay',
-      'reverb',
-      'guitarcenter'
-    ]);
-    expect(events.filter((event) => event.type === 'source_completed').map((event) => event.source)).toEqual([
-      'reverb',
-      'guitarcenter',
-      'ebay'
-    ]);
-    expect(
-      events
-        .filter((event) => event.type === 'source_completed')
-        .map((event) => event.completedSources)
-    ).toEqual([1, 2, 3]);
-    expect(response.results[0]?.source).toBe('reverb');
+      expect(events[0]?.type).toBe('started');
+      expect(events.filter((event) => event.type === 'source_started').map((event) => event.source)).toEqual([
+        'ebay',
+        'reverb',
+        'guitarcenter'
+      ]);
+      expect(events.filter((event) => event.type === 'source_completed').map((event) => event.source)).toEqual([
+        'reverb',
+        'guitarcenter',
+        'ebay'
+      ]);
+      expect(
+        events
+          .filter((event) => event.type === 'source_completed')
+          .map((event) => event.completedSources)
+      ).toEqual([1, 2, 3]);
+      expect(response.results[0]?.source).toBe('reverb');
+    } finally {
+      if (previousHistoryPath === undefined) {
+        delete process.env.SEARCH_HISTORY_PATH;
+      } else {
+        process.env.SEARCH_HISTORY_PATH = previousHistoryPath;
+      }
+
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
