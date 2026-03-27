@@ -1,0 +1,98 @@
+name: Preset Request
+description: Request a new preset from the GitHub Pages snapshot site.
+title: "Preset request: "
+labels:
+  - preset-request
+body:
+  - type: input
+    id: label
+    attributes:
+      label: Label
+      description: Short preset name shown on the site.
+      placeholder: Blue Fender Jazzmaster
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: One sentence explaining what this preset should find.
+      placeholder: Find used blue Fender Jazzmasters and filter out parts or accessory listings.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - guitar
+        - effects
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: search_terms
+    attributes:
+      label: Search terms
+      description: Enter one search term per line or use commas.
+      placeholder: |-
+        fender jazzmaster blue
+        lake placid blue jazzmaster
+    validations:
+      required: true
+
+  - type: textarea
+    id: include_keywords
+    attributes:
+      label: Include keywords
+      description: Enter one keyword per line or use commas.
+      placeholder: |-
+        fender
+        jazzmaster
+    validations:
+      required: true
+
+  - type: textarea
+    id: exclude_keywords
+    attributes:
+      label: Exclude keywords
+      description: Enter one keyword per line or use commas.
+      placeholder: |-
+        squier
+        partscaster
+        body only
+    validations:
+      required: true
+
+  - type: textarea
+    id: blue_finish_keywords
+    attributes:
+      label: Blue finish keywords
+      description: Optional. Use this when the preset needs blue-finish verification.
+      placeholder: |-
+        blue
+        tidepool
+        lake placid blue
+    validations:
+      required: false
+
+  - type: input
+    id: local_pickup_radius_miles
+    attributes:
+      label: Local pickup radius miles
+      description: Optional. Defaults to the app default if left blank.
+      placeholder: "50"
+    validations:
+      required: false
+
+  - type: input
+    id: home_base_label
+    attributes:
+      label: Home base label
+      description: Optional. Defaults to the app home base if left blank.
+      placeholder: Salt Lake City, UT
+    validations:
+      required: false

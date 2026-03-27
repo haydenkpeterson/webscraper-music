@@ -12,7 +12,9 @@ describe('marketplace parsers', () => {
     const results = parseEbaySearchHtml(fixtures('ebay-search.html'));
     expect(results).toHaveLength(2);
     expect(results[0].title).toContain('Tidepool Blue');
+    expect(results[0].itemPrice).toBe(597);
     expect(results[0].shippingPrice).toBe(61.67);
+    expect(results[0].location).toBe('United States');
     expect(results[0].localOnly).toBe(false);
   });
 

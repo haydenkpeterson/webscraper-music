@@ -47,6 +47,7 @@ type CompareJobState = {
 };
 
 const snapshotMode = import.meta.env.VITE_SNAPSHOT_MODE === 'true';
+const presetRequestUrl = import.meta.env.VITE_PRESET_REQUEST_URL as string | undefined;
 
 function formatCurrency(value: number | null): string {
   if (value === null) {
@@ -1020,7 +1021,22 @@ export function App() {
               </button>
             </div>
           </form>
-        ) : null}
+        ) : (
+          <section className="tool-panel">
+            <p className="preset-tag">Add preset</p>
+            <p className="snapshot-copy">
+              GitHub Pages cannot save presets directly. Submit a preset request issue and the repo automation will add it to the next snapshot
+              deploy.
+            </p>
+            {presetRequestUrl ? (
+              <div className="tool-actions">
+                <a className="button button-primary button-link" href={presetRequestUrl} rel="noreferrer" target="_blank">
+                  Request preset
+                </a>
+              </div>
+            ) : null}
+          </section>
+        )}
       </section>
 
       {compareResult ? (

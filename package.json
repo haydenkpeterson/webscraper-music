@@ -13,6 +13,7 @@
     "build:server": "tsc -p tsconfig.server.json",
     "snapshot:generate": "tsx scripts/generateSnapshot.ts",
     "snapshot:refresh": "tsx scripts/generateSnapshot.ts --refresh-presets",
+    "preset:import-request": "tsx scripts/importPresetRequest.ts",
     "start": "node dist/server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",

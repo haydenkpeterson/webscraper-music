@@ -15,6 +15,38 @@ import {
 
 const EBAY_BASE_URL = 'https://www.ebay.com';
 
+function pickFirstText($: cheerio.CheerioAPI, element: Parameters<cheerio.CheerioAPI>[0], selectors: string[]): string {
+  for (const selector of selectors) {
+    const value = compactWhitespace($(element).find(selector).first().text());
+    if (value) {
+      return value;
+    }
+  }
+
+  return '';
+}
+
+function extractFallbackCurrencyText(cardText: string): string {
+  const match = cardText.match(/(?:US\s*)?\$\d[\d,]*(?:\.\d{2})?(?:\s+to\s+(?:US\s*)?\$\d[\d,]*(?:\.\d{2})?)?/i);
+  return compactWhitespace(match?.[0] ?? '');
+}
+
+function extractLocation(cardText: string, locationText: string): string {
+  const normalizedLocation = compactWhitespace(locationText.replace(/^Located in\s*/i, ''));
+  if (normalizedLocation) {
+    return normalizedLocation;
+  }
+
+  const locationMatch = cardText.match(/Located in\s+(.+?)(?=(?:\s+(?:Seller|Shop|Top Rated|Sponsored|See details|Opens in a new window|Pre-Owned|Used|Brand New|Open box|For parts))|$)/i);
+  const fallbackLocation = compactWhitespace(locationMatch?.[1] ?? '');
+  const unitedStatesIndex = fallbackLocation.indexOf('United States');
+  if (unitedStatesIndex >= 0) {
+    return fallbackLocation.slice(0, unitedStatesIndex + 'United States'.length).trim();
+  }
+
+  return fallbackLocation;
+}
+
 function buildSearchUrls(preset: Preset): string[] {
   return preset.searchTerms.map((query) => {
     const url = new URL('/sch/i.html', EBAY_BASE_URL);
@@ -38,21 +70,30 @@ export function parseEbaySearchHtml(html: string): CandidateListing[] {
       return;
     }
 
-    const title = compactWhitespace(cardText.split('Opens in a new window or tab')[0] ?? cardText);
-    const conditionMatch = cardText.match(/(Pre-Owned|Used|Brand New|Open box|For parts or not working)/i);
-    const locationMatch = cardText.match(/Located in ([A-Za-z .'-]+(?:, [A-Z]{2})?|United States)/i);
+    const titleText =
+      pickFirstText($, element, ['.s-item__title', '.s-card__title', '[role="heading"]']) ||
+      compactWhitespace(cardText.split('Opens in a new window or tab')[0] ?? cardText);
+    const title = compactWhitespace(titleText.replace(/^New Listing\s*/i, ''));
+    const conditionText = pickFirstText($, element, ['.SECONDARY_INFO', '.s-item__subtitle', '.s-card__subtitle']);
+    const conditionMatch = (conditionText || cardText).match(/(Pre-Owned|Used|Brand New|Open box|For parts or not working)/i);
+    const locationText = pickFirstText($, element, ['.s-item__location', '.s-card__location', '[data-testid="ux-textspans--location"]']);
     const imageUrl = $(element).find('img').first().attr('src') ?? $(element).find('img').first().attr('data-defer-load') ?? null;
-    const itemPrice = parseMoney(cardText);
-    if (!itemPrice) {
+    const itemPriceText =
+      pickFirstText($, element, ['.s-item__price', '.s-card__price', '[data-testid="x-price-primary"]', '[data-testid="x-price"]']) ||
+      extractFallbackCurrencyText(cardText);
+    const itemPrice = parseMoney(itemPriceText);
+    if (itemPrice === null) {
       return;
     }
 
-    const shippingMatch = cardText.match(/(?:\+\s*)?(\$[\d,.]+)\s+(?:delivery|shipping)/i);
+    const shippingText =
+      pickFirstText($, element, ['.s-item__shipping', '.s-item__logisticsCost', '.s-card__shipping']) || cardText;
+    const shippingMatch = shippingText.match(/(?:\+\s*)?(\$[\d,.]+)\s+(?:delivery|shipping)/i);
     const shippingLabel =
       shippingMatch?.[0] ??
-      (cardText.includes('Free delivery') ? 'Free delivery' : /local pickup/i.test(cardText) ? 'Local pickup' : null);
-    const shippingPrice = shippingMatch ? parseShipping(shippingMatch[0]) : cardText.includes('Free delivery') ? 0 : null;
-    const localOnly = /local pickup/i.test(cardText);
+      (/free (?:delivery|shipping)/i.test(shippingText) ? 'Free delivery' : /local pickup/i.test(shippingText) ? 'Local pickup' : null);
+    const shippingPrice = shippingMatch ? parseShipping(shippingMatch[0]) : /free (?:delivery|shipping)/i.test(shippingText) ? 0 : null;
+    const localOnly = /local pickup/i.test(shippingText);
 
     candidates.push({
       title,
@@ -61,7 +102,7 @@ export function parseEbaySearchHtml(html: string): CandidateListing[] {
       itemPrice,
       shippingPrice,
       currency: 'USD',
-      location: locationMatch?.[1] ?? '',
+      location: extractLocation(cardText, locationText),
       imageUrl,
       shippingLabel,
       localOnly
